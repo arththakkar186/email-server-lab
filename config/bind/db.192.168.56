@@ -1,0 +1,15 @@
+; /etc/bind/zones/db.192.168.56  -  reverse zone for the lab host-only network
+; Receiving servers check that the sending IP's PTR matches its HELO name (FCrDNS).
+$TTL 3600
+@           IN  SOA ns1.maillab.test. hostmaster.maillab.test. (
+                    2021031501  ; serial
+                    3600
+                    900
+                    604800
+                    300 )
+
+@           IN  NS      ns1.maillab.test.
+
+10          IN  PTR     mail.maillab.test.
+20          IN  PTR     client01.maillab.test.
+21          IN  PTR     client02.maillab.test.

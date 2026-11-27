@@ -1,0 +1,23 @@
+// /etc/bind/named.conf.options  -  resolver behaviour for the lab
+acl "lab" {
+    127.0.0.0/8;
+    192.168.56.0/24;
+};
+
+options {
+    directory "/var/cache/bind";
+
+    // Answer recursive queries only for lab machines; never be an open resolver.
+    recursion yes;
+    allow-recursion { lab; };
+    allow-query { lab; };
+
+    // Anything outside maillab.test goes to the VirtualBox NAT resolver.
+    forwarders { 10.0.2.3; };
+    forward only;
+
+    dnssec-validation auto;
+    listen-on { 127.0.0.1; 192.168.56.10; };
+    listen-on-v6 { none; };
+    version "not disclosed";
+};

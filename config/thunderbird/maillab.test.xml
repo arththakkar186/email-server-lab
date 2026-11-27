@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Thunderbird auto-configuration for maillab.test (Mozilla ISPDB format, config-v1.1).
+  Copy to <Thunderbird install dir>/isp/maillab.test.xml on the client VM, or serve it at
+  http://autoconfig.maillab.test/mail/config-v1.1.xml. Thunderbird then fills in every
+  server setting after the user types only their name, address and password.
+-->
+<clientConfig version="1.1">
+  <emailProvider id="maillab.test">
+    <domain>maillab.test</domain>
+    <displayName>MailLab (lab mail server)</displayName>
+    <displayShortName>MailLab</displayShortName>
+
+    <incomingServer type="imap">
+      <hostname>mail.maillab.test</hostname>
+      <port>993</port>
+      <socketType>SSL</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILLOCALPART%</username>
+    </incomingServer>
+
+    <incomingServer type="pop3">
+      <hostname>mail.maillab.test</hostname>
+      <port>995</port>
+      <socketType>SSL</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILLOCALPART%</username>
+      <pop3>
+        <leaveMessagesOnServer>true</leaveMessagesOnServer>
+      </pop3>
+    </incomingServer>
+
+    <outgoingServer type="smtp">
+      <hostname>mail.maillab.test</hostname>
+      <port>587</port>
+      <socketType>STARTTLS</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILLOCALPART%</username>
+    </outgoingServer>
+  </emailProvider>
+</clientConfig>

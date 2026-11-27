@@ -1,0 +1,23 @@
+# /etc/fail2ban/jail.local  -  ban repeated login failures on the mail server
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+# Never ban the host-only gateway (the VirtualBox host) by accident.
+ignoreip = 127.0.0.1/8 192.168.56.1
+
+[sshd]
+enabled = true
+
+[postfix]
+enabled = true
+mode    = more
+
+[postfix-sasl]
+enabled = true
+port    = smtp,submission
+filter  = postfix[mode=auth]
+
+[dovecot]
+enabled = true
+port    = imaps,pop3s

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 700" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13">
+  <title>MailLab architecture: VirtualBox host, mail01 server guest and client01 Thunderbird guest</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#2f5d8a"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#2e7d4f"/></marker>
+    <style>
+      .host{fill:#fafbfc;stroke:#9aa7b4;stroke-width:1.4;stroke-dasharray:7 5}
+      .vm{fill:#ffffff;stroke:#2f5d8a;stroke-width:1.6}
+      .svc{fill:#eef4fb;stroke:#2f5d8a;stroke-width:1.2}
+      .sto{fill:#fff6d6;stroke:#a68300;stroke-width:1.2}
+      .sec{fill:#fdf0e6;stroke:#b5651d;stroke-width:1.2}
+      .cli{fill:#e8f5ec;stroke:#2e7d4f;stroke-width:1.2}
+      .net{fill:#f2f4f7;stroke:#7b8794;stroke-width:1.2}
+      .t{fill:#1f2933}.b{font-weight:600}.s{font-size:11px;fill:#52606d}
+      .ln{stroke:#2f5d8a;stroke-width:1.8;fill:none}
+      .lg{stroke:#2e7d4f;stroke-width:1.8;fill:none}
+      .ld{stroke:#7b8794;stroke-width:1.4;fill:none;stroke-dasharray:5 4}
+    </style>
+  </defs>
+  <rect width="1180" height="700" fill="#fff"/>
+
+  <rect class="host" x="16" y="16" width="1148" height="668" rx="12"/>
+  <text class="t b" x="34" y="42">Physical host (Windows 10 / macOS) · Oracle VirtualBox 6.1</text>
+
+  <!-- networks -->
+  <rect class="net" x="40" y="600" width="1100" height="34" rx="6"/>
+  <text class="t b" x="590" y="622" text-anchor="middle">Host-only network vboxnet0 · 192.168.56.0/24 · lab traffic (host = 192.168.56.1)</text>
+  <rect class="net" x="40" y="642" width="1100" height="28" rx="6"/>
+  <text class="s" x="590" y="660" text-anchor="middle">NAT adapter per VM · 10.0.2.0/24 · package downloads only, resolver 10.0.2.3 (no inbound)</text>
+
+  <!-- mail01 VM -->
+  <rect class="vm" x="40" y="64" width="700" height="510" rx="10"/>
+  <text class="t b" x="58" y="90">mail01 · mail.maillab.test · 192.168.56.10</text>
+  <text class="s" x="58" y="106">Ubuntu Server 20.04 LTS guest · 2 vCPU · 2 GB RAM · 20 GB disk</text>
+
+  <rect class="sec" x="60" y="116" width="660" height="30" rx="6"/>
+  <text class="t" x="390" y="136" text-anchor="middle">UFW host firewall: allow 22, 25, 53 (lab only), 587, 993, 995 · fail2ban (sshd, postfix, postfix-sasl, dovecot)</text>
+
+  <rect class="svc" x="70" y="180" width="180" height="96" rx="8"/>
+  <text class="t b" x="160" y="204" text-anchor="middle">BIND9</text>
+  <text class="s" x="160" y="222" text-anchor="middle">authoritative maillab.test</text>
+  <text class="s" x="160" y="238" text-anchor="middle">MX 10 mail · A · PTR · SPF</text>
+  <text class="s" x="160" y="254" text-anchor="middle">recursion for lab only</text>
+  <text class="s" x="160" y="270" text-anchor="middle">udp/tcp 53</text>
+
+  <rect class="svc" x="290" y="180" width="200" height="140" rx="8"/>
+  <text class="t b" x="390" y="204" text-anchor="middle">Postfix (MTA)</text>
+  <text class="s" x="390" y="224" text-anchor="middle">smtpd :25 inbound MX</text>
+  <text class="s" x="390" y="240" text-anchor="middle">submission :587</text>
+  <text class="s" x="390" y="256" text-anchor="middle">STARTTLS required, then AUTH</text>
+  <text class="s" x="390" y="272" text-anchor="middle">relay only if authenticated</text>
+  <text class="s" x="390" y="288" text-anchor="middle">queue → cleanup → qmgr</text>
+  <text class="s" x="390" y="304" text-anchor="middle">→ lmtp transport</text>
+
+  <rect class="svc" x="530" y="180" width="180" height="140" rx="8"/>
+  <text class="t b" x="620" y="204" text-anchor="middle">Dovecot (MDA)</text>
+  <text class="s" x="620" y="224" text-anchor="middle">IMAPS :993 · POP3S :995</text>
+  <text class="s" x="620" y="240" text-anchor="middle">LMTP delivery socket</text>
+  <text class="s" x="620" y="256" text-anchor="middle">SASL auth socket</text>
+  <text class="s" x="620" y="272" text-anchor="middle">PAM → /etc/shadow</text>
+  <text class="s" x="620" y="288" text-anchor="middle">143 / 110 disabled</text>
+
+  <!-- postfix <-> dovecot sockets -->
+  <path class="ln" d="M490 236 L530 236" marker-end="url(#a)"/>
+  <text class="s" x="510" y="228" text-anchor="middle">LMTP</text>
+  <path class="ln" d="M530 290 L490 290" marker-end="url(#a)"/>
+  <text class="s" x="510" y="306" text-anchor="middle">SASL</text>
+  <text class="s" x="510" y="336" text-anchor="middle">UNIX sockets in /var/spool/postfix/private/</text>
+
+  <rect class="sto" x="530" y="360" width="180" height="84" rx="8"/>
+  <text class="t b" x="620" y="384" text-anchor="middle">Maildir storage</text>
+  <text class="s" x="620" y="402" text-anchor="middle">/home/&lt;user&gt;/Maildir</text>
+  <text class="s" x="620" y="418" text-anchor="middle">cur/ new/ tmp/</text>
+  <text class="s" x="620" y="434" text-anchor="middle">.Sent .Drafts .Junk .Trash</text>
+  <path class="ln" d="M680 320 L680 360" marker-end="url(#a)"/>
+
+  <rect class="sto" x="290" y="360" width="200" height="84" rx="8"/>
+  <text class="t b" x="390" y="384" text-anchor="middle">Lab CA + certificate</text>
+  <text class="s" x="390" y="402" text-anchor="middle">/etc/ssl/maillab/</text>
+  <text class="s" x="390" y="418" text-anchor="middle">MailLab Root CA (RSA 4096)</text>
+  <text class="s" x="390" y="434" text-anchor="middle">server cert used by Postfix + Dovecot</text>
+  <path class="ld" d="M390 320 L390 360"/>
+
+  <rect class="svc" x="70" y="360" width="180" height="84" rx="8"/>
+  <text class="t b" x="160" y="384" text-anchor="middle">Accounts</text>
+  <text class="s" x="160" y="402" text-anchor="middle">alice · bob · carol</text>
+  <text class="s" x="160" y="418" text-anchor="middle">shell /usr/sbin/nologin</text>
+  <text class="s" x="160" y="434" text-anchor="middle">aliases: postmaster, it-team</text>
+
+  <rect class="svc" x="70" y="470" width="640" height="84" rx="8"/>
+  <text class="t b" x="390" y="494" text-anchor="middle">Logs and verification</text>
+  <text class="s" x="390" y="514" text-anchor="middle">/var/log/mail.log (postfix + dovecot) · journalctl -u named · fail2ban-client status</text>
+  <text class="s" x="390" y="532" text-anchor="middle">provision/90-verify.sh: services, ports, MX/PTR, certificate chains, delivery, open-relay check</text>
+
+  <!-- client01 VM -->
+  <rect class="vm" x="790" y="64" width="350" height="510" rx="10"/>
+  <text class="t b" x="808" y="90">client01 · 192.168.56.20</text>
+  <text class="s" x="808" y="106">Ubuntu desktop (Xfce) or Windows 10 guest · 3 GB RAM</text>
+
+  <rect class="cli" x="815" y="180" width="300" height="140" rx="8"/>
+  <text class="t b" x="965" y="204" text-anchor="middle">Mozilla Thunderbird</text>
+  <text class="s" x="965" y="224" text-anchor="middle">Accounts: alice@ / bob@maillab.test</text>
+  <text class="s" x="965" y="240" text-anchor="middle">Incoming: IMAP 993 SSL/TLS</text>
+  <text class="s" x="965" y="256" text-anchor="middle">Outgoing: SMTP 587 STARTTLS</text>
+  <text class="s" x="965" y="272" text-anchor="middle">Auth: normal password</text>
+  <text class="s" x="965" y="288" text-anchor="middle">autoconfig: isp/maillab.test.xml</text>
+  <text class="s" x="965" y="304" text-anchor="middle">trusts MailLab Root CA</text>
+
+  <rect class="svc" x="815" y="360" width="300" height="84" rx="8"/>
+  <text class="t b" x="965" y="384" text-anchor="middle">Resolver → 192.168.56.10</text>
+  <text class="s" x="965" y="402" text-anchor="middle">mail.maillab.test → 192.168.56.10</text>
+  <text class="s" x="965" y="418" text-anchor="middle">scripts/mail_e2e_test.py</text>
+  <text class="s" x="965" y="434" text-anchor="middle">swaks / openssl s_client for testing</text>
+
+  <!-- client to server flows -->
+  <path class="lg" d="M815 230 L712 230" marker-end="url(#g)"/>
+  <text class="s" x="735" y="222" text-anchor="middle">IMAPS 993</text>
+  <path class="lg" d="M815 290 H765 V168 H390 V178" marker-end="url(#g)"/>
+  <text class="s" x="560" y="164" text-anchor="middle" fill="#2e7d4f">SUBMISSION 587 (STARTTLS, then AUTH)</text>
+  <path class="lg" d="M815 420 H765 V461 H56 V228 H68" marker-end="url(#g)"/>
+  <text class="s" x="420" y="455" text-anchor="middle" fill="#2e7d4f">DNS 53 (client resolver → BIND)</text>
+
+  <!-- VM network attachments -->
+  <path class="ld" d="M390 574 L390 600"/>
+  <path class="ld" d="M965 574 L965 600"/>
+</svg>

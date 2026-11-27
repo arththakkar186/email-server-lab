@@ -1,0 +1,98 @@
+# /etc/postfix/main.cf  -  mail.maillab.test
+# Postfix 3.4 (Ubuntu 20.04). Lab domain maillab.test (reserved TLD, RFC 2606).
+# Installed by provision/20-postfix.sh. See docs/02-architecture.md for the mail flow.
+
+# ---------------------------------------------------------------- identity
+myhostname = mail.maillab.test
+mydomain = maillab.test
+myorigin = $mydomain
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no
+compatibility_level = 2
+readme_directory = no
+
+# ---------------------------------------------------------------- network
+inet_interfaces = all
+inet_protocols = ipv4
+# Only the server itself is trusted to relay without logging in. Lab clients
+# (192.168.56.0/24) must authenticate on port 587 like any real user.
+mynetworks = 127.0.0.0/8
+
+# ---------------------------------------------------------------- delivery
+# Local mailboxes are handed to Dovecot over LMTP, so Dovecot owns the Maildir,
+# indexes and quota. Postfix never writes to a mailbox itself.
+mailbox_transport = lmtp:unix:private/dovecot-lmtp
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+recipient_delimiter = +
+message_size_limit = 26214400
+mailbox_size_limit = 0
+
+# ---------------------------------------------------------------- TLS (server side)
+smtpd_tls_cert_file = /etc/ssl/maillab/mail.maillab.test.crt
+smtpd_tls_key_file = /etc/ssl/maillab/mail.maillab.test.key
+smtpd_tls_security_level = may
+smtpd_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_mandatory_ciphers = high
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+
+# ---------------------------------------------------------------- TLS (client side)
+smtp_tls_security_level = may
+smtp_tls_CAfile = /etc/ssl/maillab/maillab-ca.crt
+smtp_tls_loglevel = 1
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+# ---------------------------------------------------------------- authentication
+# SASL is answered by Dovecot over a UNIX socket inside the Postfix chroot.
+# It is switched on only for the submission service in master.cf.
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = no
+smtpd_sasl_security_options = noanonymous
+smtpd_sasl_local_domain = $mydomain
+broken_sasl_auth_clients = no
+
+# ---------------------------------------------------------------- abuse controls
+smtpd_helo_required = yes
+disable_vrfy_command = yes
+strict_rfc821_envelopes = yes
+smtpd_delay_reject = yes
+
+smtpd_helo_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_invalid_helo_hostname,
+    reject_non_fqdn_helo_hostname
+
+smtpd_sender_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_non_fqdn_sender,
+    reject_unknown_sender_domain
+
+# The anti-open-relay rule: anyone may deliver TO maillab.test, nobody may
+# relay to another domain unless they are local or authenticated.
+smtpd_relay_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_unauth_destination
+
+smtpd_recipient_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_non_fqdn_recipient,
+    reject_unknown_recipient_domain,
+    reject_unlisted_recipient,
+    reject_unauth_destination
+
+smtpd_data_restrictions = reject_unauth_pipelining
+
+# Connection rate limits (anvil)
+smtpd_client_connection_rate_limit = 30
+smtpd_client_message_rate_limit = 60
+anvil_rate_time_unit = 60s

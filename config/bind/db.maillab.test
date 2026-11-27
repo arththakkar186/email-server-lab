@@ -1,0 +1,30 @@
+; /etc/bind/zones/db.maillab.test  -  forward zone for the lab mail domain
+; maillab.test uses the reserved .test TLD (RFC 2606), so it can never clash with a real domain.
+$TTL 3600
+@           IN  SOA ns1.maillab.test. hostmaster.maillab.test. (
+                    2021031501  ; serial (YYYYMMDDnn)
+                    3600        ; refresh
+                    900         ; retry
+                    604800      ; expire
+                    300 )       ; negative-cache TTL
+
+; name servers
+@           IN  NS      ns1.maillab.test.
+
+; mail exchanger: where other servers deliver mail for @maillab.test
+@           IN  MX  10  mail.maillab.test.
+
+; hosts
+ns1         IN  A       192.168.56.10
+mail        IN  A       192.168.56.10
+client01    IN  A       192.168.56.20
+client02    IN  A       192.168.56.21
+
+; friendly names that mail clients guess during auto-configuration
+imap        IN  CNAME   mail
+smtp        IN  CNAME   mail
+autoconfig  IN  CNAME   mail
+
+; sender policy (documented for completeness; no external mail in the lab)
+@           IN  TXT     "v=spf1 mx -all"
+_dmarc      IN  TXT     "v=DMARC1; p=quarantine; rua=mailto:postmaster@maillab.test"

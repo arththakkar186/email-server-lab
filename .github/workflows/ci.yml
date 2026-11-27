@@ -1,0 +1,32 @@
+name: lint-and-test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Config policy tests
+        run: python3 -m unittest discover -s tests -v
+      - name: ShellCheck provisioning scripts
+        run: shellcheck -S warning provision/*.sh
+      - name: Validate DNS zones with BIND tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq bind9utils
+          named-checkzone maillab.test config/bind/db.maillab.test
+          named-checkzone 56.168.192.in-addr.arpa config/bind/db.192.168.56
+      - name: Validate Postfix config syntax
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postfix
+          mkdir -p /tmp/pf && cp config/postfix/main.cf config/postfix/master.cf /tmp/pf/
+          # Certificates and maps do not exist in CI; postconf still parses every parameter.
+          postconf -c /tmp/pf -n > /dev/null
+          postconf -c /tmp/pf -M > /dev/null
+      - name: Validate Thunderbird autoconfig XML
+        run: python3 -c "import xml.dom.minidom,sys; xml.dom.minidom.parse('config/thunderbird/maillab.test.xml')"
